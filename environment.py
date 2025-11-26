@@ -1,8 +1,7 @@
 # ORIGINAL ENVIRONMENT FOUND HERE: https://github.com/aylint/gym-minesweeper
 
-import sys
 from six import StringIO
-import random
+import pygame
 from random import randint
 
 import numpy as np
@@ -71,24 +70,12 @@ def place_mines(board_size, num_mines):
             if not is_mine(board, x, y):
                 board[x, y] = MINE
                 mines_placed += 1
-    #board = np.eye(10) * -1
-    '''
-    board = np.array([[ 0,  0,  0,  0,  0,  0,  0,  0,  0, -1],
-    [ 0,  0,  0,  0,  0, -1,  0,  0,  0,  0],
-    [ 0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
-    [ 0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
-    [ 0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
-    [ 0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
-    [ 0,  -1,  0,  0,  0,  0,  0,  0,  0,  0],
-    [0,  0,  0,  0,  -1,  -1,  0,  0,  0,  0],
-    [ 0,  0,  0,  0, 0,  0,  0, -1,  0, -1],
-    [ 0, -1, -1,  0, 0,  0,  0,  0,  0,  0]])'''
     return board
 
-class MinesweeperDiscreetEnv(gym.Env):
+class MinesweeperDiscreteEnv(gym.Env):
     metadata = {"render.modes": ["ansi", "human"]}
 
-    def __init__(self, board_size=BOARD_SIZE, num_mines=NUM_MINES, training=False):
+    def __init__(self, board_size=BOARD_SIZE, num_mines=NUM_MINES, life_count=3, render_mode="human"):
         """
         Create a minesweeper game.
 
@@ -101,16 +88,18 @@ class MinesweeperDiscreetEnv(gym.Env):
 
         self.board_size = board_size
         self.num_mines = num_mines
+        self.render_mode = render_mode
         self.board = place_mines(board_size, num_mines)
         self.my_board = np.ones((board_size, board_size), dtype=int) * CLOSED
         self.num_actions = 0
-        self.lives = 3
-        if training:
-            random.seed(5)
+        self.life_count = life_count
+        self.lives = self.life_count
         self.observation_space = spaces.Box(low=-2, high=9,
                                             shape=(self.board_size, self.board_size), dtype=int)
         self.action_space = spaces.Discrete(self.board_size*self.board_size)
         self.valid_actions = np.ones((self.board_size * self.board_size), dtype=bool)
+        if self.render_mode == "human":
+            pygame.init()
 
     def count_neighbour_mines(self, x, y):
         """return number of mines in neighbour cells given an x-y coordinate
@@ -196,7 +185,7 @@ class MinesweeperDiscreetEnv(gym.Env):
             self.board = place_mines(self.board_size, self.num_mines)
         self.num_actions = 0
         self.valid_actions = np.ones((self.board_size * self.board_size), dtype=bool)
-        self.lives = 3
+        self.lives = self.life_count
 
         return self.my_board
 
@@ -275,9 +264,30 @@ class MinesweeperDiscreetEnv(gym.Env):
         """
         See gym.Env.render().
         """
-        outfile = StringIO() if mode == 'ansi' else sys.stdout
-        s = f"Lives Remaining: {self.lives}\n"
-        s += board2str(self.my_board)
-        outfile.write(s)
-        if mode != 'human':
+        if mode == 'ansi':
+            outfile = StringIO() 
+            s = f"Lives Remaining: {self.lives}\n"
+            s += board2str(self.my_board)
+            outfile.write(s)
             return outfile
+        window = pygame.display.set_mode((500,550))
+        window.fill((0,0,0))
+        pygame.font.init()
+        font = pygame.font.Font(None,30)
+        for i, row in enumerate(self.my_board):
+            for j, elem in enumerate(row):
+                if elem == -2:
+                    pygame.draw.rect(window,pygame.Color(255,255,255),(50*j,50*i,50,50))
+                elif elem != 0:
+                    if elem == -1:
+                        text_elem = font.render("M",True,pygame.Color(255,255,255))
+                    else:
+                        text_elem = font.render(str(elem),True,pygame.Color(255,255,255))
+                    cell_rect = pygame.Rect(j*50, i*50, 50, 50)
+                    text_rect = text_elem.get_rect(center=cell_rect.center)
+                    window.blit(text_elem, text_rect)
+        pygame.draw.rect(window,pygame.Color(0,0,0),(0,500,500,50))
+        life_text = font.render("Lives: "+str(self.lives),True,pygame.Color(255,255,255))
+        life_rect = life_text.get_rect(topleft=(0,500))
+        window.blit(life_text,life_rect)
+        pygame.display.update()

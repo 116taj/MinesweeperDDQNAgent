@@ -4,44 +4,21 @@ import torch
 import torch.nn as nn
 from torchrl.data import PrioritizedReplayBuffer, ListStorage
 import matplotlib.pyplot as plt
-from MinesweeperDQN import MinesweeperDiscreetEnv
-
+from environment import MinesweeperDiscreteEnv
+from model import Net
 #get env
-env = MinesweeperDiscreetEnv(training=True)
-
-#CNN Model
-class Net(nn.Module):
-    def __init__(self):
-        super(Net, self).__init__()
-        # 4 conv layers with 128 filters and relu as activation
-        self.conv = nn.Sequential(
-            nn.Conv2d(1, 128, 3, 1, 1),
-            nn.ReLU(),
-            nn.Conv2d(128, 128, 3, 1, 1),
-            nn.ReLU(),
-            nn.Conv2d(128, 128, 3, 1, 1),
-            nn.ReLU(),
-            nn.Conv2d(128, 1, 1)
-        )
-
-    def forward(self, x):
-        x = self.conv(x)\
-        #flatten
-        x = x.view(x.size(0), -1)
-        return x
+env = MinesweeperDiscreteEnv(training=True)
 
 #init device and models
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 model = Net().to(device)
 model2 = Net().to(device)
 
-#print(device)
 #set hyperparameters
 learning_rate = 0.000005
 optimizer = torch.optim.Adam(model.parameters(),lr=learning_rate)
 model.train()
 model2.eval()
-#print(model.summary())
 discount = 0.95
 epsilon = 1
 decay = 0.999
@@ -58,8 +35,6 @@ max_size = 256*100
 buffer = PrioritizedReplayBuffer(alpha=0.6,beta=0.9,storage=ListStorage(max_size=max_size),batch_size=batch_size)
 tau = 0.01
 #training
-import time
-start = time.time()
 for i in range(training_episodes):
     #reset stat trackers
     total = 0
@@ -132,9 +107,6 @@ for i in range(training_episodes):
         s = next_s
     #add to stats
     losses.append(ep_loss/timesteps)
-    #print(i)
-    #print(total)
-    #print(ep_loss/timesteps)
     if (reward == 1):
         wins.append(1)
     else:
@@ -147,14 +119,8 @@ for i in range(training_episodes):
         wins = []
         scores = []
 
-'''save and plot stats
-torch.save(model.state_dict(), "model1life.pth")
-torch.save(model2.state_dict(), "model2.pth")
-print("done in ")
-end = time.time() - start
-print(end)
-print(won)
-print(crewards)
+
+torch.save(model.state_dict(), "model.pth")
 #show data
 episodes = list(range(100,10100,100))
 won = [0.03, 0.05, 0.12, 0.37, 0.39, 0.53, 0.5, 0.57, 0.59, 0.62, 0.63, 0.59, 0.65, 0.67, 0.77, 0.66, 0.69, 0.74, 0.69, 0.66, 0.77, 0.66, 0.71, 0.67, 0.69, 0.67, 0.74, 0.73, 0.7, 0.7, 0.7, 0.78, 0.67, 0.73, 0.72, 0.78, 0.74, 0.75, 0.69, 0.8, 0.78, 0.67, 0.71, 0.78, 0.72, 0.77, 0.72, 0.79, 0.64, 0.77, 0.74, 0.82, 0.77, 0.7, 0.76, 0.72, 0.76, 0.74, 0.76, 0.74, 0.7, 0.78, 0.78, 0.77, 0.8, 0.8, 0.72, 0.74, 0.75, 0.73, 0.78, 0.73, 0.78, 0.78, 0.8, 0.74, 0.79, 0.74, 0.78, 0.81, 0.79, 0.78, 0.74, 0.76, 0.78, 0.77, 0.69, 0.75, 0.8, 0.76, 0.7, 0.81, 0.74, 0.77, 0.76, 0.74, 0.75, 0.74, 0.79, 0.76]
@@ -177,4 +143,3 @@ plt.title("Loss for DDQN over Episodes")
 plt.legend()
 plt.show()
 
-'''
