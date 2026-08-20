@@ -50,7 +50,7 @@ def is_valid(x, y, board_size):
 
 def is_win(my_board, mine_count):
     """ return if the game is won """
-    return np.count_nonzero(my_board == CLOSED) == mine_count
+    return np.count_nonzero(my_board == CLOSED) + np.count_nonzero(my_board == MINE) == mine_count
 
 
 def is_mine(board, x, y):
