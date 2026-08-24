@@ -34,7 +34,6 @@ batch_size = 256
 max_size = 256*100
 buffer = PrioritizedReplayBuffer(alpha=0.6,beta=0.9,storage=ListStorage(max_size=max_size),batch_size=batch_size)
 tau = 0.01
-best_wr = 0.0
 #training
 for i in range(training_episodes):
     #reset stat trackers
@@ -121,9 +120,6 @@ for i in range(training_episodes):
         won.append(np.mean(wins))
         crewards.append(np.mean(scores))
         print(f"ep {i+1:>5}  winrate {np.mean(wins):.3f}  reward {np.mean(scores):>7.2f}  loss {np.mean(losses[-100:]):.4f}  eps {epsilon:.3f}")
-        if won[-1] >= best_wr:
-            best_wr = won[-1]
-            torch.save(model.state_dict(), "model_best.pth")
         wins = []
         scores = []
 
