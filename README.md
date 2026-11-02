@@ -6,21 +6,31 @@ shown where the mines are.
 
 ## Results
 
-1000 episodes, greedy policy, no exploration. `evalDDQN.py` against `model.pth`:
+`model.pth` under a greedy policy with no exploration, over 5000 episodes on a
+10x10 board with 9 mines:
 
-| Configuration | Win rate |
+| Lives | Win rate |
 | --- | --- |
-| 10x10 board, 9 mines, 3 lives | **91%** |
+| 3 | **89%** |
+| 1 | **40%** |
 
-This is not the standard game, so the number does not compare to one:
+Three lives is what it was trained on. The second row is the same weights under
+standard rules, where one mine ends the game.
 
+Three lives is also why the first number does not compare to a win rate for
+normal Minesweeper:
+
+- A mine costs a life and play continues. Only the third one ends the episode.
 - 9 mines on 100 cells is 9% density. The classic beginner preset is 10 mines
   on 81 cells, 12.3%.
-- The agent has **3 lives**. A mine costs a life and play continues. The third
-  one ends the episode.
 - There is no first-click safety, so the opening move can hit a mine.
 
-`life_count=1` runs it under standard rules.
+Minesweeper is fickle and a game ends on one mistake, which makes for a harsh
+training signal. The lives are there to keep an episode going long enough to
+learn from. `life_count=1` puts the standard rules back.
+
+Evaluations of 1000 episodes land a couple of points either side of these
+figures, so both are measured over 5000.
 
 ## Approach
 
@@ -53,6 +63,8 @@ at tau = 0.01 on every training step.
 | Mine hit, no lives remaining | -1 |
 | Safe reveal | +0.02 |
 
+The reward for a safe reveal pays out games that last longer.
+
 ### Hyperparameters
 
 | | |
@@ -63,6 +75,9 @@ at tau = 0.01 on every training step.
 | Epsilon | 1.0 -> 0.01, decay 0.999 per training step |
 | Batch size | 256 |
 | Training episodes | 10,000 |
+
+These came out of trial and error, the learning rate most of all. 5e-6 is the
+value that converged instead of sending the loss up and to the right.
 
 ## Observation encoding
 
@@ -95,7 +110,7 @@ model.py           Fully convolutional Q-network
 environment.py     Gymnasium Minesweeper env, lives, action mask, renderer
 doubleDQN.py       Training loop with prioritized replay
 evalDDQN.py        Greedy evaluation over 1000 episodes
-model.pth          The weights behind the result above
+model.pth          The trained weights behind the results above
 requirements.txt   Dependencies
 ```
 
