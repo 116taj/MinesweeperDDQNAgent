@@ -1,0 +1,9 @@
+# Install torch and torchrl together: torchrl is built against a specific
+# torch version and will pull a matching one.
+torch
+torchrl
+gymnasium
+numpy
+matplotlib
+pygame
+six
