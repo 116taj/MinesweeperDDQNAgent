@@ -6,19 +6,14 @@ shown where the mines are.
 
 ## Results
 
-`model.pth` under a greedy policy with no exploration, over 5000 episodes on a
-10x10 board with 9 mines:
+`model.pth` under a greedy policy with no exploration, over 5000 episodes:
 
-| Lives | Win rate |
+| Configuration | Win rate |
 | --- | --- |
-| 3 | **89%** |
-| 1 | **40%** |
+| 10x10 board, 9 mines, 3 lives | **89%** |
 
-Three lives is what it was trained on. The second row is the same weights under
-standard rules, where one mine ends the game.
-
-Three lives is also why the first number does not compare to a win rate for
-normal Minesweeper:
+Three lives is what it was trained on, and it is why that number does not
+compare to a win rate for normal Minesweeper:
 
 - A mine costs a life and play continues. Only the third one ends the episode.
 - 9 mines on 100 cells is 9% density. The classic beginner preset is 10 mines
@@ -29,8 +24,8 @@ Minesweeper is fickle and a game ends on one mistake, which makes for a harsh
 training signal. The lives are there to keep an episode going long enough to
 learn from. `life_count=1` puts the standard rules back.
 
-Evaluations of 1000 episodes land a couple of points either side of these
-figures, so both are measured over 5000.
+Evaluations of 1000 episodes land a couple of points either side of 89%, so
+this one is measured over 5000.
 
 ## Approach
 
@@ -119,6 +114,9 @@ requirements.txt   Dependencies
 - There is no baseline here to compare the win rate against.
 - `place_mines` places mines uniformly at random and ignores the first move.
 - One training run, one seed, no averaging.
+- The same weights win about 40% under standard single-life rules, but they
+  were trained with 3 lives, which is more forgiving of a mistake. That figure
+  is as much the gap between training and evaluation as it is the agent.
 
 ## Credits
 
